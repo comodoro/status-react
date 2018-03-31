@@ -3,6 +3,7 @@ from views.base_element import BaseButton, BaseEditBox
 from views.base_view import BaseView
 import time
 
+
 class AccountButton(BaseButton):
 
     def __init__(self, driver):
@@ -98,7 +99,7 @@ class SignInView(BaseView):
         self.name_input = NameInput(self.driver)
         self.do_not_share = DonNotShare(self.driver)
 
-    def create_user(self, password: str = 'qwerty1234'):
+    def create_user(self, username: str = '', password='qwerty'):
         self.create_account_button.click()
         self.password_input.set_value(password)
         self.next_button.click()
@@ -106,7 +107,7 @@ class SignInView(BaseView):
         self.next_button.click()
 
         self.element_by_text_part('Display name').wait_for_element(10)
-        username = 'user_%s' % get_current_time()
+        username = username if username else 'user_%s' % get_current_time()
         self.name_input.send_keys(username)
 
         self.next_button.click()

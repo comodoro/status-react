@@ -13,7 +13,6 @@ from views.base_view import BaseView
 
 
 class AbstractTestCase:
-
     __metaclass__ = ABCMeta
 
     @property
@@ -171,17 +170,21 @@ class SauceMultipleDeviceTestCase(AbstractTestCase):
     def setup_method(self, method):
         self.drivers = dict()
 
-    def create_drivers(self, quantity=2):
+    def create_drivers(self, quantity=2, max_duration=1800, custom_implicitly_wait=None):
         if self.__class__.__name__ == 'TestOfflineMessages':
             capabilities = self.update_capabilities_sauce_lab('platformVersion', '6.0')
+        elif self.__class__.__name__ == 'TestMessageReliability':
+            capabilities = self.update_capabilities_sauce_lab('maxDuration', max_duration)
         else:
             capabilities = self.capabilities_sauce_lab
-        self.drivers = self.loop.run_until_complete(start_threads(quantity, webdriver.Remote,
-                                                    self.drivers,
-                                                    self.executor_sauce_lab,
-                                                    capabilities))
+        self.drivers = self.loop.run_until_complete(start_threads(quantity,
+                                                                  webdriver.Remote,
+                                                                  self.drivers,
+                                                                  self.executor_sauce_lab,
+                                                                  capabilities))
         for driver in range(quantity):
-            self.drivers[driver].implicitly_wait(self.implicitly_wait)
+            self.drivers[driver].implicitly_wait(
+                custom_implicitly_wait if custom_implicitly_wait else self.implicitly_wait)
             BaseView(self.drivers[driver]).accept_agreements()
             test_suite_data.current_test.testruns[-1].jobs.append(self.drivers[driver].session_id)
 
@@ -212,4 +215,3 @@ class MultipleDeviceTestCase(environments[pytest.config.getoption('env')]):
         for user in self.senders:
             api_requests.faucet(address=self.senders[user]['address'])
         super(MultipleDeviceTestCase, self).teardown_method(method)
-
